@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ሰፈር · ገበያና ዜና</title>
+<meta name="theme-color" content="#0f5c4d">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;600;800&display=swap">
 <style>
 :root{--bg:#f3f6f4;--card:#fff;--ink:#14201c;--mute:#5d6b65;--line:#dbe3df;--brand:#0f5c4d;--onbrand:#fff;--gold:#f2b705;--red:#c8372d;--r:14px}
@@ -215,6 +219,7 @@ $("f").onsubmit=async e=>{
   $("sub").disabled=false;
 };
 render();
+if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
 </body>
 </html>
