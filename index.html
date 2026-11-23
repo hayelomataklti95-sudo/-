@@ -7,14 +7,16 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;600;800&display=swap">
 <style>
 :root{--bg:#f3f6f4;--card:#fff;--ink:#14201c;--mute:#5d6b65;--line:#dbe3df;--brand:#0f5c4d;--onbrand:#fff;--gold:#f2b705;--red:#c8372d;--r:14px}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1714;--card:#18231f;--ink:#e9f0ed;--mute:#9aaba3;--line:#2a3a34;--brand:#3fb59a;--onbrand:#06201a}}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1714;--card:#18231f;--ink:#e9f0ed;--mute:#9aaba3;--line:#2a3a34;--brand:#3fb59a;--onbrand:#06201a}}
 *{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 "Noto Sans Ethiopic",system-ui,sans-serif;padding:env(safe-area-inset-top,0px) 0 calc(76px + env(safe-area-inset-bottom,0px))}
-header{background:var(--brand);color:var(--onbrand);padding:18px 16px 14px;border-bottom:5px solid var(--gold)}
-h1{margin:0;font-size:28px;font-weight:800;letter-spacing:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 "Noto Sans Ethiopic",system-ui,sans-serif;padding:env(safe-area-inset-top,0px) 0 calc(80px + env(safe-area-inset-bottom,0px))}
+header{background:var(--brand);color:var(--onbrand);padding:16px;border-bottom:5px solid var(--gold)}
+header .wrap{display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{margin:0;font-size:28px;font-weight:800}
 header p{margin:0;opacity:.85;font-size:14px}
+#acct{background:transparent;border:1.5px solid var(--onbrand);color:var(--onbrand);border-radius:99px;padding:5px 14px;font:inherit;font-size:14px;cursor:pointer;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wrap{max-width:720px;margin:0 auto;padding:0 14px}
+header .wrap{padding:0}
 .search{margin:14px 0 8px}
 input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px}
 input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:1px}
@@ -32,7 +34,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible{out
 .m{color:var(--mute);font-size:13px}
 .btn{display:inline-block;text-align:center;text-decoration:none;border:0;border-radius:10px;background:var(--brand);color:var(--onbrand);font:inherit;font-weight:600;padding:8px 14px;cursor:pointer}
 .btn.alt{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
+.btn:disabled{opacity:.6}
 .card .btn{margin-top:auto;font-size:14px}
+.del{background:none;border:0;color:var(--red);font:inherit;font-size:13px;cursor:pointer;padding:4px 0;text-align:left}
 .news{display:flex;flex-direction:column;gap:12px}
 .post{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .post .pb{padding:12px 14px}
@@ -53,20 +57,20 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 form{padding:16px;display:grid;gap:10px}
 form h2{margin:0;font-size:20px}
 label{font-size:14px;font-weight:600;display:grid;gap:4px}
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg,.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #prev{max-height:120px;border-radius:10px;display:none}
 .err{color:var(--red);font-size:14px;min-height:1em;margin:0}
+.hint{font-size:13px;color:var(--mute);margin:0}
 @media(prefers-reduced-motion:no-preference){dialog[open]{animation:up .2s ease-out}@keyframes up{from{transform:translateY(30px);opacity:0}}}
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>ሰፈር</h1><p>ከጎረቤትህ ግዛ፣ ሽጥ፣ ዜና ስማ</p></div></header>
+<header><div class="wrap"><div><h1>ሰፈር</h1><p>ከጎረቤትህ ግዛ፣ ሽጥ፣ ዜና ስማ</p></div><button id="acct">ግባ</button></div></header>
 
 <main class="wrap">
   <div class="search"><input id="q" type="search" placeholder="ፈልግ፦ ቤት፣ ስልክ፣ መኪና…" aria-label="ፈልግ"></div>
   <div class="chips" id="chips" role="group" aria-label="ምድብ"></div>
-  <section id="list" aria-live="polite"></section>
+  <section id="list" aria-live="polite"><div class="empty">በመጫን ላይ…</div></section>
 </main>
 
 <nav>
@@ -92,77 +96,123 @@ label{font-size:14px;font-weight:600;display:grid;gap:4px}
   <label>መግለጫ<textarea id="fd" rows="3" maxlength="600"></textarea></label>
   <label>ፎቶ<input id="fi" type="file" accept="image/*"></label>
   <img id="prev" alt="የፎቶ ቅድመ እይታ">
+  <p class="hint">የሚያስገቡት ስልክ ቁጥር ለሁሉም ሰው ይታያል።</p>
   <p class="err" id="err"></p>
-  <div class="row"><button type="button" class="btn alt" id="cancel">ተወው</button><button class="btn" type="submit">ለጥፍ</button></div>
+  <div class="row"><button type="button" class="btn alt" id="cancel">ተወው</button><button class="btn" type="submit" id="sub">ለጥፍ</button></div>
 </form>
 </dialog>
 
-<script>
+<dialog id="adlg">
+<form id="af" method="dialog">
+  <h2>ግባ ወይም አካውንት ክፈት</h2>
+  <label>ኢሜይል<input id="ae" type="email" required autocomplete="email"></label>
+  <label>ፓስዎርድ (ቢያንስ 6 ፊደል)<input id="ap" type="password" required minlength="6" autocomplete="current-password"></label>
+  <p class="err" id="aerr"></p>
+  <div class="row"><button type="submit" class="btn" id="login">ግባ</button><button type="button" class="btn alt" id="signup">አካውንት ክፈት</button></div>
+  <button type="button" class="btn alt" id="acancel">ተወው</button>
+</form>
+</dialog>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getFirestore,collection,addDoc,deleteDoc,doc,query,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+const app=initializeApp({
+  apiKey:"AIzaSyCh_yg3jnr-gvYAy8M9rmx4dftwXq_jlX4",
+  authDomain:"hibret-566bf.firebaseapp.com",
+  projectId:"hibret-566bf",
+  storageBucket:"hibret-566bf.firebasestorage.app",
+  messagingSenderId:"39137565989",
+  appId:"1:39137565989:web:eb492efbcdfdc4b2c6cecc"
+});
+const db=getFirestore(app),auth=getAuth(app);
+
 const MC=["ቤት","መሬት","መኪና","ኤሌክትሮኒክስ","ቤት እቃ","ልብስ","አገልግሎት","ስራ","ሌላ"];
 const NC=["ዜና","ማስጠንቀቂያ","ጥያቄ","ክስተት","የጠፋ/የተገኘ"];
 const ICON={"ቤት":"🏠","መሬት":"🌍","መኪና":"🚗","ኤሌክትሮኒክስ":"📱","ቤት እቃ":"🛋️","ልብስ":"👕","አገልግሎት":"🛠️","ስራ":"💼","ሌላ":"📦"};
-const H=36e5,now=Date.now();
-const DEMO=[
-{id:1,k:"m",c:"ቤት",t:"ባለ 2 ክፍል ቤት ለኪራይ",p:12000,l:"ቦሌ",d:"ሁለተኛ ፎቅ፣ ውሃና መብራት የተሟላ።",ph:"0911000000",ts:now-2*H},
-{id:2,k:"m",c:"ኤሌክትሮኒክስ",t:"ሳምሰንግ ስልክ በጥሩ ሁኔታ",p:9500,l:"ፒያሳ",d:"ለ1 ዓመት ያገለገለ፣ ሙሉ እቃው አለ።",ph:"0922000000",ts:now-5*H},
-{id:3,k:"m",c:"መኪና",t:"ቶዮታ ቪትዝ 2008",p:850000,l:"ሰሚት",d:"ንጹህ ሊብሬ፣ ቤንዚን።",ph:"0933000000",ts:now-26*H},
-{id:4,k:"m",c:"ቤት እቃ",t:"የእንጨት ሶፋ ስብስብ",p:18000,l:"ጉርድ ሾላ",d:"5 ሰው የሚይዝ።",ph:"",ts:now-30*H},
-{id:5,k:"n",c:"ክስተት",t:"የሰፈር ጽዳት ዘመቻ ቅዳሜ",d:"ቅዳሜ ጠዋት 2 ሰዓት በመንደር ዋና በር ላይ እንገናኛለን። መጥረጊያ ያለው ይዞ ይምጣ።",l:"ቦሌ",ts:now-3*H},
-{id:6,k:"n",c:"ማስጠንቀቂያ",t:"ነገ ውሃ ይቋረጣል",d:"የውሃ አገልግሎት ለጥገና ከጠዋቱ 3 እስከ ማታ 11 ሰዓት ይቋረጣል። ቀድማችሁ ያጠራቅሙ።",l:"ፒያሳ",ts:now-8*H},
-{id:7,k:"n",c:"የጠፋ/የተገኘ",t:"የጠፋ ቁልፍ ቅርንጫፍ",d:"በቀይ ማሰሪያ የታሰረ ቁልፍ ከመናኸሪያ አካባቢ ጠፍቷል። ያገኘ ይደውልልን።",l:"ሰሚት",ts:now-20*H}
-];
-let items=[];try{items=JSON.parse(localStorage.getItem("sefer")||"null")||DEMO}catch(e){items=DEMO}
-const save=()=>{try{localStorage.setItem("sefer",JSON.stringify(items))}catch(e){}};
-let kind="m",cat="ሁሉም",img="";
+const H=36e5;
+let items=[],loaded=false,loadErr="",user=null,kind="m",cat="ሁሉም",img="";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ago=ts=>{const h=Math.floor((Date.now()-ts)/H);return h<1?"አሁን":h<24?`ከ${h} ሰዓት በፊት`:`ከ${Math.floor(h/24)} ቀን በፊት`};
 const birr=n=>n?Number(n).toLocaleString("en-US")+" ብር":"ዋጋ ተደራድሮ";
+const safeImg=s=>/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s||"")?s:"";
+const mine=i=>user&&i.uid===user.uid?`<button class="del" data-del="${esc(i.id)}">🗑 ሰርዝ</button>`:"";
 
-function chips(){
-  const list=["ሁሉም",...(kind=="m"?MC:NC)];
-  $("chips").innerHTML=list.map(c=>`<button class="chip" aria-pressed="${c==cat}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
-}
 function render(){
   $("tm").setAttribute("aria-selected",kind=="m");$("tn").setAttribute("aria-selected",kind=="n");
-  chips();
+  $("chips").innerHTML=["ሁሉም",...(kind=="m"?MC:NC)].map(c=>`<button class="chip" aria-pressed="${c==cat}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+  if(loadErr){$("list").innerHTML=`<div class="empty">${esc(loadErr)}</div>`;return}
+  if(!loaded){return}
   const q=$("q").value.trim().toLowerCase();
-  const rows=items.filter(i=>i.k==kind&&(cat=="ሁሉም"||i.c==cat)&&(!q||(i.t+i.d+i.l+i.c).toLowerCase().includes(q))).sort((a,b)=>b.ts-a.ts);
+  const rows=items.filter(i=>i.k==kind&&(cat=="ሁሉም"||i.c==cat)&&(!q||(i.t+i.d+i.l+i.c).toLowerCase().includes(q)));
   if(!rows.length){$("list").innerHTML=`<div class="empty">እዚህ ምንም የለም።<br>መጀመሪያ ለጥፈው የሚያዩ ሁኑ፤ ከታች ያለውን + ይጫኑ።</div>`;return}
   $("list").innerHTML=kind=="m"
-  ?`<div class="grid">`+rows.map(i=>`<article class="card"><div class="ph">${i.img?`<img src="${i.img}" alt="${esc(i.t)}">`:ICON[i.c]||"📦"}</div><div class="cb"><span class="price">${birr(i.p)}</span><span class="t">${esc(i.t)}</span><span class="m">${esc(i.l)} · ${ago(i.ts)}</span>${i.ph?`<a class="btn" href="tel:${esc(i.ph)}">ደውል</a>`:""}</div></article>`).join("")+`</div>`
-  :`<div class="news">`+rows.map(i=>`<article class="post">${i.img?`<img src="${i.img}" alt="${esc(i.t)}">`:""}<div class="pb"><span class="tag ${i.c=="ማስጠንቀቂያ"?"warn":i.c=="ክስተት"?"evt":""}">${esc(i.c)}</span><h3>${esc(i.t)}</h3><p>${esc(i.d)}</p><span class="m">${esc(i.l)} · ${ago(i.ts)}</span></div></article>`).join("")+`</div>`;
+  ?`<div class="grid">`+rows.map(i=>`<article class="card"><div class="ph">${safeImg(i.img)?`<img src="${safeImg(i.img)}" alt="${esc(i.t)}">`:ICON[i.c]||"📦"}</div><div class="cb"><span class="price">${birr(i.p)}</span><span class="t">${esc(i.t)}</span><span class="m">${esc(i.l)} · ${ago(i.ts)}</span>${i.ph?`<a class="btn" href="tel:${esc(i.ph)}">ደውል</a>`:""}${mine(i)}</div></article>`).join("")+`</div>`
+  :`<div class="news">`+rows.map(i=>`<article class="post">${safeImg(i.img)?`<img src="${safeImg(i.img)}" alt="${esc(i.t)}">`:""}<div class="pb"><span class="tag ${i.c=="ማስጠንቀቂያ"?"warn":i.c=="ክስተት"?"evt":""}">${esc(i.c)}</span><h3>${esc(i.t)}</h3><p>${esc(i.d)}</p><span class="m">${esc(i.l)} · ${ago(i.ts)}</span><br>${mine(i)}</div></article>`).join("")+`</div>`;
 }
-function setKind(k){kind=k;cat="ሁሉም";render()}
+
+// ሁሉም ሰው የሚያየው የጋራ ዳታ (በቀጥታ ይዘምናል)
+onSnapshot(query(collection(db,"posts"),orderBy("ts","desc"),limit(150)),
+  s=>{items=s.docs.map(d=>({id:d.id,...d.data()}));loaded=true;loadErr="";render()},
+  e=>{loadErr="ዳታ ማንበብ አልተቻለም። Firestore ዳታቤዝ መፈጠሩንና ደንቦቹ (Rules) መቀመጣቸውን ያረጋግጡ።";console.error(e);render()});
+
+onAuthStateChanged(auth,u=>{user=u;$("acct").textContent=u?(u.email.split("@")[0]+" · ውጣ"):"ግባ";render()});
+$("acct").onclick=()=>{if(user){if(confirm("ከአካውንትህ ልውጣ?"))signOut(auth)}else{$("aerr").textContent="";$("adlg").showModal()}};
+
+const authErr=c=>({"auth/invalid-credential":"ኢሜይሉ ወይም ፓስዎርዱ ትክክል አይደለም።","auth/email-already-in-use":"ይህ ኢሜይል አካውንት አለው፤ «ግባ» ይጫኑ።","auth/weak-password":"ፓስዎርድ ቢያንስ 6 ፊደል መሆን አለበት።","auth/invalid-email":"ኢሜይሉ ትክክል አይደለም።","auth/network-request-failed":"ኢንተርኔት የለም።","auth/operation-not-allowed":"Email/Password በFirebase ውስጥ አልበራም።"}[c]||"አልተሳካም፤ እንደገና ይሞክሩ።");
+async function doAuth(fn){
+  const e=$("ae").value.trim(),p=$("ap").value;
+  if(!e||p.length<6){$("aerr").textContent="ኢሜይልና ቢያንስ 6 ፊደል ፓስዎርድ ያስገቡ።";return}
+  try{await fn(auth,e,p);$("adlg").close();$("af").reset()}catch(x){$("aerr").textContent=authErr(x.code)}
+}
+$("af").onsubmit=ev=>{ev.preventDefault();doAuth(signInWithEmailAndPassword)};
+$("signup").onclick=()=>doAuth(createUserWithEmailAndPassword);
+$("acancel").onclick=()=>$("adlg").close();
+
 function formKind(k){
   $("kM").setAttribute("aria-pressed",k=="m");$("kN").setAttribute("aria-pressed",k=="n");
   $("fc").innerHTML=(k=="m"?MC:NC).map(c=>`<option>${c}</option>`).join("");
   $("priceRow").style.display=k=="m"?"grid":"none";
   $("f").dataset.k=k;
 }
-$("tm").onclick=()=>setKind("m");$("tn").onclick=()=>setKind("n");
+$("tm").onclick=()=>{kind="m";cat="ሁሉም";render()};
+$("tn").onclick=()=>{kind="n";cat="ሁሉም";render()};
 $("q").oninput=render;
 $("chips").onclick=e=>{const b=e.target.closest("[data-c]");if(b){cat=b.dataset.c;render()}};
-$("add").onclick=()=>{formKind(kind);$("err").textContent="";$("dlg").showModal()};
+$("add").onclick=()=>{
+  if(!user){$("aerr").textContent="ለመለጠፍ መጀመሪያ ግቡ።";$("adlg").showModal();return}
+  formKind(kind);$("err").textContent="";$("dlg").showModal();
+};
 $("cancel").onclick=()=>$("dlg").close();
 $("kM").onclick=()=>formKind("m");$("kN").onclick=()=>formKind("n");
+$("list").onclick=async e=>{
+  const b=e.target.closest("[data-del]");
+  if(b&&confirm("ይህ ልጥፍ ይሰረዝ?")){try{await deleteDoc(doc(db,"posts",b.dataset.del))}catch(x){alert("መሰረዝ አልተቻለም።")}}
+};
 
 // ፎቶ ወደ ትንሽ መጠን ይቀንሳል (ዳታ ለመቆጠብ)
 $("fi").onchange=e=>{
   const file=e.target.files[0];img="";$("prev").style.display="none";if(!file)return;
   const r=new FileReader();
   r.onload=()=>{const im=new Image();im.onload=()=>{
-    const s=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement("canvas");
+    const s=Math.min(1,640/Math.max(im.width,im.height)),c=document.createElement("canvas");
     c.width=im.width*s;c.height=im.height*s;c.getContext("2d").drawImage(im,0,0,c.width,c.height);
-    img=c.toDataURL("image/jpeg",.7);$("prev").src=img;$("prev").style.display="block"};im.src=r.result};
+    img=c.toDataURL("image/jpeg",.6);$("prev").src=img;$("prev").style.display="block"};im.src=r.result};
   r.readAsDataURL(file);
 };
-$("f").onsubmit=e=>{
+$("f").onsubmit=async e=>{
   e.preventDefault();
   const k=$("f").dataset.k||"m",t=$("ft").value.trim();
   if(!t){$("err").textContent="እባክዎ ርዕስ ይጻፉ።";return}
-  items.push({id:Date.now(),k,c:$("fc").value,t,p:k=="m"?$("fp").value:"",ph:k=="m"?$("fph").value.trim():"",l:$("fl").value.trim(),d:$("fd").value.trim(),img,ts:Date.now()});
-  save();$("f").reset();img="";$("prev").style.display="none";$("dlg").close();kind=k;cat="ሁሉም";render();
+  if(img.length>700000){$("err").textContent="ፎቶው በጣም ትልቅ ነው፤ ሌላ ይምረጡ።";return}
+  $("sub").disabled=true;$("err").textContent="";
+  try{
+    await addDoc(collection(db,"posts"),{k,c:$("fc").value,t,p:k=="m"?$("fp").value:"",ph:k=="m"?$("fph").value.trim():"",l:$("fl").value.trim(),d:$("fd").value.trim(),img,ts:Date.now(),uid:user.uid});
+    $("f").reset();img="";$("prev").style.display="none";$("dlg").close();kind=k;cat="ሁሉም";render();
+  }catch(x){console.error(x);$("err").textContent="መለጠፍ አልተቻለም። ኢንተርኔትዎን እና የFirestore ደንቦችን ያረጋግጡ።"}
+  $("sub").disabled=false;
 };
 render();
 </script>
