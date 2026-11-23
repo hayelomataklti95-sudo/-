@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ሰፈር · ገበያና ዜና</title>
 <meta name="theme-color" content="#0f5c4d">
+<meta name="description" content="ከጎረቤትህ ግዛ፣ ሽጥ፣ ዜና ስማ">
+<meta property="og:title" content="ሰፈር · ገበያና ዜና">
+<meta property="og:description" content="ከጎረቤትህ ግዛ፣ ሽጥ፣ ዜና ስማ">
+<meta property="og:image" content="icon-512.png">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -65,6 +69,7 @@ label{font-size:14px;font-weight:600;display:grid;gap:4px}
 #prev{max-height:120px;border-radius:10px;display:none}
 .err{color:var(--red);font-size:14px;min-height:1em;margin:0}
 .hint{font-size:13px;color:var(--mute);margin:0}
+.card,.post{cursor:pointer}.card.sold .ph{opacity:.45}.tag.sold{background:var(--mute);color:#fff}.dimg{width:100%;max-height:300px;object-fit:cover;display:block}.dpad{padding:16px;display:grid;gap:8px}.dd{white-space:pre-wrap;margin:0}.dpad h3{margin:0;font-size:20px}
 @media(prefers-reduced-motion:no-preference){dialog[open]{animation:up .2s ease-out}@keyframes up{from{transform:translateY(30px);opacity:0}}}
 </style>
 </head>
@@ -113,14 +118,17 @@ label{font-size:14px;font-weight:600;display:grid;gap:4px}
   <label>ፓስዎርድ (ቢያንስ 6 ፊደል)<input id="ap" type="password" required minlength="6" autocomplete="current-password"></label>
   <p class="err" id="aerr"></p>
   <div class="row"><button type="submit" class="btn" id="login">ግባ</button><button type="button" class="btn alt" id="signup">አካውንት ክፈት</button></div>
+  <button type="button" class="btn alt" id="reset">ፓስዎርድ ረሳሁ</button>
   <button type="button" class="btn alt" id="acancel">ተወው</button>
 </form>
 </dialog>
 
+<dialog id="ddlg"><div id="dbody"></div></dialog>
+
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {getFirestore,collection,addDoc,deleteDoc,doc,query,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {initializeFirestore,persistentLocalCache,collection,addDoc,updateDoc,deleteDoc,doc,query,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
 const app=initializeApp({
   apiKey:"AIzaSyCh_yg3jnr-gvYAy8M9rmx4dftwXq_jlX4",
@@ -130,7 +138,7 @@ const app=initializeApp({
   messagingSenderId:"39137565989",
   appId:"1:39137565989:web:eb492efbcdfdc4b2c6cecc"
 });
-const db=getFirestore(app),auth=getAuth(app);
+const db=initializeFirestore(app,{localCache:persistentLocalCache()}),auth=getAuth(app);
 
 const MC=["ቤት","መሬት","መኪና","ኤሌክትሮኒክስ","ቤት እቃ","ልብስ","አገልግሎት","ስራ","ሌላ"];
 const NC=["ዜና","ማስጠንቀቂያ","ጥያቄ","ክስተት","የጠፋ/የተገኘ"];
@@ -142,7 +150,7 @@ const esc=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const ago=ts=>{const h=Math.floor((Date.now()-ts)/H);return h<1?"አሁን":h<24?`ከ${h} ሰዓት በፊት`:`ከ${Math.floor(h/24)} ቀን በፊት`};
 const birr=n=>n?Number(n).toLocaleString("en-US")+" ብር":"ዋጋ ተደራድሮ";
 const safeImg=s=>/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s||"")?s:"";
-const mine=i=>user&&i.uid===user.uid?`<button class="del" data-del="${esc(i.id)}">🗑 ሰርዝ</button>`:"";
+const mine=i=>user&&i.uid===user.uid?(i.k=="m"?`<button class="del" data-sold="${esc(i.id)}">${i.s?"↩ እንደገና ለሽያጭ":"✅ ተሸጧል ብለህ ምልክት አድርግ"}</button>`:"")+`<button class="del" data-del="${esc(i.id)}">🗑 ሰርዝ</button>`:"";
 
 function render(){
   $("tm").setAttribute("aria-selected",kind=="m");$("tn").setAttribute("aria-selected",kind=="n");
@@ -153,8 +161,8 @@ function render(){
   const rows=items.filter(i=>i.k==kind&&(cat=="ሁሉም"||i.c==cat)&&(!q||(i.t+i.d+i.l+i.c).toLowerCase().includes(q)));
   if(!rows.length){$("list").innerHTML=`<div class="empty">እዚህ ምንም የለም።<br>መጀመሪያ ለጥፈው የሚያዩ ሁኑ፤ ከታች ያለውን + ይጫኑ።</div>`;return}
   $("list").innerHTML=kind=="m"
-  ?`<div class="grid">`+rows.map(i=>`<article class="card"><div class="ph">${safeImg(i.img)?`<img src="${safeImg(i.img)}" alt="${esc(i.t)}">`:ICON[i.c]||"📦"}</div><div class="cb"><span class="price">${birr(i.p)}</span><span class="t">${esc(i.t)}</span><span class="m">${esc(i.l)} · ${ago(i.ts)}</span>${i.ph?`<a class="btn" href="tel:${esc(i.ph)}">ደውል</a>`:""}${mine(i)}</div></article>`).join("")+`</div>`
-  :`<div class="news">`+rows.map(i=>`<article class="post">${safeImg(i.img)?`<img src="${safeImg(i.img)}" alt="${esc(i.t)}">`:""}<div class="pb"><span class="tag ${i.c=="ማስጠንቀቂያ"?"warn":i.c=="ክስተት"?"evt":""}">${esc(i.c)}</span><h3>${esc(i.t)}</h3><p>${esc(i.d)}</p><span class="m">${esc(i.l)} · ${ago(i.ts)}</span><br>${mine(i)}</div></article>`).join("")+`</div>`;
+  ?`<div class="grid">`+rows.map(i=>`<article class="card${i.s?" sold":""}" data-open="${esc(i.id)}"><div class="ph">${safeImg(i.img)?`<img loading="lazy" src="${safeImg(i.img)}" alt="${esc(i.t)}">`:ICON[i.c]||"📦"}</div><div class="cb"><span class="price">${birr(i.p)}</span><span class="t">${esc(i.t)}</span><span class="m">${esc(i.l)} · ${ago(i.ts)}</span>${i.s?`<span class="tag sold">ተሸጧል</span>`:`<button class="btn">ዝርዝር</button>`}</div></article>`).join("")+`</div>`
+  :`<div class="news">`+rows.map(i=>`<article class="post" data-open="${esc(i.id)}">${safeImg(i.img)?`<img loading="lazy" src="${safeImg(i.img)}" alt="${esc(i.t)}">`:""}<div class="pb"><span class="tag ${i.c=="ማስጠንቀቂያ"?"warn":i.c=="ክስተት"?"evt":""}">${esc(i.c)}</span><h3>${esc(i.t)}</h3><p>${esc(i.d)}</p><span class="m">${esc(i.l)} · ${ago(i.ts)}</span><br>${mine(i)}</div></article>`).join("")+`</div>`;
 }
 
 // ሁሉም ሰው የሚያየው የጋራ ዳታ (በቀጥታ ይዘምናል)
@@ -191,10 +199,29 @@ $("add").onclick=()=>{
 };
 $("cancel").onclick=()=>$("dlg").close();
 $("kM").onclick=()=>formKind("m");$("kN").onclick=()=>formKind("n");
-$("list").onclick=async e=>{
-  const b=e.target.closest("[data-del]");
-  if(b&&confirm("ይህ ልጥፍ ይሰረዝ?")){try{await deleteDoc(doc(db,"posts",b.dataset.del))}catch(x){alert("መሰረዝ አልተቻለም።")}}
-};
+const byId=id=>items.find(i=>i.id==id);
+function openD(id){const i=byId(id);if(!i)return;const m=i.k=="m";
+ $("dbody").innerHTML=`${safeImg(i.img)?`<img class="dimg" src="${safeImg(i.img)}" alt="${esc(i.t)}">`:""}<div class="dpad"><div><span class="tag">${esc(i.c)}</span>${i.s?` <span class="tag sold">ተሸጧል</span>`:""}</div>${m?`<div class="price">${birr(i.p)}</div>`:""}<h3>${esc(i.t)}</h3><span class="m">${esc(i.l)} · ${ago(i.ts)}</span><p class="dd">${esc(i.d)||"መግለጫ የለም።"}</p>${m&&i.ph?(user?`<a class="btn" href="tel:${esc(i.ph)}">📞 ${esc(i.ph)}</a>`:`<button class="btn" data-login>ስልክ ለማየት ግባ</button>`):""}<div class="row"><button class="btn alt" data-share="${esc(id)}">↗ አጋራ</button><button class="btn alt" data-rep="${esc(id)}">⚑ ሪፖርት</button></div>${mine(i)}<button class="btn alt" data-close>ዝጋ</button></div>`;
+ $("ddlg").showModal()}
+async function share(i){const u=location.origin+location.pathname,t=i.t+(i.p?" · "+birr(i.p):"");
+ try{if(navigator.share)await navigator.share({title:i.t,text:t,url:u});else{await navigator.clipboard.writeText(t+" "+u);alert("ተቀድቷል።")}}catch(x){}}
+function needLogin(msg){$("aerr").textContent=msg;$("adlg").showModal()}
+async function report(id){if(!user)return needLogin("ለሪፖርት መጀመሪያ ግቡ።");
+ if(!confirm("ይህ ልጥፍ ተገቢ አይደለም ብለው ሪፖርት ያድርጉ?"))return;
+ try{await addDoc(collection(db,"reports"),{pid:id,uid:user.uid,ts:Date.now()});alert("አመሰግናለሁ፤ ሪፖርቱ ደርሶናል።")}catch(x){alert("አልተሳካም።")}}
+async function clicks(e){
+  const t=e.target;let b;
+  if(b=t.closest("[data-del]")){if(confirm("ይህ ልጥፍ ይሰረዝ?")){try{await deleteDoc(doc(db,"posts",b.dataset.del));$("ddlg").close()}catch(x){alert("መሰረዝ አልተቻለም።")}}return}
+  if(b=t.closest("[data-sold]")){const i=byId(b.dataset.sold);try{await updateDoc(doc(db,"posts",i.id),{s:!i.s});$("ddlg").close()}catch(x){alert("አልተሳካም።")}return}
+  if(b=t.closest("[data-share]")){share(byId(b.dataset.share));return}
+  if(b=t.closest("[data-rep]")){report(b.dataset.rep);return}
+  if(t.closest("[data-login]")){needLogin("ስልክ ለማየት መጀመሪያ ግቡ።");return}
+  if(t.closest("[data-close]")){$("ddlg").close();return}
+  if(b=t.closest("[data-open]"))openD(b.dataset.open);
+}
+$("list").onclick=clicks;$("ddlg").onclick=e=>{if(e.target===$("ddlg"))$("ddlg").close();else clicks(e)};
+$("reset").onclick=async()=>{const e=$("ae").value.trim();if(!e){$("aerr").textContent="መጀመሪያ ኢሜይልዎን ያስገቡ።";return}
+ try{await sendPasswordResetEmail(auth,e);$("aerr").textContent="የማስተካከያ ሊንክ ወደ ኢሜይልዎ ተልኳል።"}catch(x){$("aerr").textContent=authErr(x.code)}};
 
 // ፎቶ ወደ ትንሽ መጠን ይቀንሳል (ዳታ ለመቆጠብ)
 $("fi").onchange=e=>{
@@ -210,10 +237,12 @@ $("f").onsubmit=async e=>{
   e.preventDefault();
   const k=$("f").dataset.k||"m",t=$("ft").value.trim();
   if(!t){$("err").textContent="እባክዎ ርዕስ ይጻፉ።";return}
+  const ph=$("fph").value.trim().replace(/[\s-]/g,"");
+  if(k=="m"&&ph&&!/^(\+251|0)?[79]\d{8}$/.test(ph)){$("err").textContent="ስልክ ቁጥሩ ትክክል አይደለም (ለምሳሌ 0911223344)።";return}
   if(img.length>700000){$("err").textContent="ፎቶው በጣም ትልቅ ነው፤ ሌላ ይምረጡ።";return}
   $("sub").disabled=true;$("err").textContent="";
   try{
-    await addDoc(collection(db,"posts"),{k,c:$("fc").value,t,p:k=="m"?$("fp").value:"",ph:k=="m"?$("fph").value.trim():"",l:$("fl").value.trim(),d:$("fd").value.trim(),img,ts:Date.now(),uid:user.uid});
+    await addDoc(collection(db,"posts"),{k,c:$("fc").value,t,p:k=="m"?$("fp").value:"",ph:k=="m"?ph:"",l:$("fl").value.trim(),d:$("fd").value.trim(),img,ts:Date.now(),uid:user.uid});
     $("f").reset();img="";$("prev").style.display="none";$("dlg").close();kind=k;cat="ሁሉም";render();
   }catch(x){console.error(x);$("err").textContent="መለጠፍ አልተቻለም። ኢንተርኔትዎን እና የFirestore ደንቦችን ያረጋግጡ።"}
   $("sub").disabled=false;
