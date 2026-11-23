@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ሰፈር · ገበያና ዜና</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#f3f6f4;--card:#fff;--ink:#14201c;--mute:#5d6b65;--line:#dbe3df;--brand:#0f5c4d;--onbrand:#fff;--gold:#f2b705;--red:#c8372d;--r:14px}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1714;--card:#18231f;--ink:#e9f0ed;--mute:#9aaba3;--line:#2a3a34;--brand:#3fb59a;--onbrand:#06201a}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 "Noto Sans Ethiopic",system-ui,sans-serif;padding:env(safe-area-inset-top,0px) 0 calc(76px + env(safe-area-inset-bottom,0px))}
+header{background:var(--brand);color:var(--onbrand);padding:18px 16px 14px;border-bottom:5px solid var(--gold)}
+h1{margin:0;font-size:28px;font-weight:800;letter-spacing:0}
+header p{margin:0;opacity:.85;font-size:14px}
+.wrap{max-width:720px;margin:0 auto;padding:0 14px}
+.search{margin:14px 0 8px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px}
+input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:1px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+.chip{flex:none;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:5px 14px;font:inherit;font-size:14px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--brand);color:var(--onbrand);border-color:var(--brand);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:620px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.ph{aspect-ratio:4/3;background:var(--line);display:grid;place-items:center;font-size:44px;overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:cover}
+.cb{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;flex:1}
+.price{font-weight:800;color:var(--brand);font-size:18px}
+.t{font-weight:600;line-height:1.35}
+.m{color:var(--mute);font-size:13px}
+.btn{display:inline-block;text-align:center;text-decoration:none;border:0;border-radius:10px;background:var(--brand);color:var(--onbrand);font:inherit;font-weight:600;padding:8px 14px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
+.card .btn{margin-top:auto;font-size:14px}
+.news{display:flex;flex-direction:column;gap:12px}
+.post{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.post .pb{padding:12px 14px}
+.post img{width:100%;max-height:340px;object-fit:cover;display:block}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 10px;border-radius:99px;background:var(--line);color:var(--ink)}
+.tag.warn{background:var(--red);color:#fff}
+.tag.evt{background:var(--gold);color:#14201c}
+.post h3{margin:6px 0 2px;font-size:18px;line-height:1.35}
+.post p{margin:0 0 6px;white-space:pre-wrap}
+.empty{text-align:center;color:var(--mute);padding:40px 10px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+nav button.tab{flex:1;background:none;border:0;color:var(--mute);font:inherit;font-size:13px;padding:4px;cursor:pointer}
+nav button.tab span{display:block;font-size:22px;line-height:1.2}
+nav button.tab[aria-selected=true]{color:var(--brand);font-weight:800}
+nav .add{flex:none;width:56px;height:56px;margin-top:-26px;border-radius:50%;border:4px solid var(--bg);background:var(--gold);color:#14201c;font-size:30px;font-weight:800;cursor:pointer}
+dialog{border:0;border-radius:18px 18px 0 0;padding:0;width:100%;max-width:560px;margin:auto auto 0;background:var(--bg);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+form{padding:16px;display:grid;gap:10px}
+form h2{margin:0;font-size:20px}
+label{font-size:14px;font-weight:600;display:grid;gap:4px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#prev{max-height:120px;border-radius:10px;display:none}
+.err{color:var(--red);font-size:14px;min-height:1em;margin:0}
+@media(prefers-reduced-motion:no-preference){dialog[open]{animation:up .2s ease-out}@keyframes up{from{transform:translateY(30px);opacity:0}}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>ሰፈር</h1><p>ከጎረቤትህ ግዛ፣ ሽጥ፣ ዜና ስማ</p></div></header>
+
+<main class="wrap">
+  <div class="search"><input id="q" type="search" placeholder="ፈልግ፦ ቤት፣ ስልክ፣ መኪና…" aria-label="ፈልግ"></div>
+  <div class="chips" id="chips" role="group" aria-label="ምድብ"></div>
+  <section id="list" aria-live="polite"></section>
+</main>
+
+<nav>
+  <button class="tab" id="tm" role="tab"><span>🛒</span>ገበያ</button>
+  <button class="add" id="add" aria-label="ለጥፍ">+</button>
+  <button class="tab" id="tn" role="tab"><span>📰</span>ዜና</button>
+</nav>
+
+<dialog id="dlg">
+<form id="f" method="dialog">
+  <h2>አዲስ ለጥፍ</h2>
+  <div class="seg">
+    <button type="button" class="chip" id="kM" aria-pressed="true">🛒 መሸጥ</button>
+    <button type="button" class="chip" id="kN" aria-pressed="false">📰 ዜና</button>
+  </div>
+  <label>ምድብ<select id="fc"></select></label>
+  <label>ርዕስ<input id="ft" required maxlength="80" placeholder="ለምሳሌ፦ ባለ 2 ክፍል ቤት ለኪራይ"></label>
+  <div class="row" id="priceRow">
+    <label>ዋጋ (ብር)<input id="fp" type="number" min="0" inputmode="numeric"></label>
+    <label>ስልክ<input id="fph" type="tel" inputmode="tel" placeholder="09…"></label>
+  </div>
+  <label>ቦታ<input id="fl" maxlength="60" placeholder="ለምሳሌ፦ ቦሌ፣ አዲስ አበባ"></label>
+  <label>መግለጫ<textarea id="fd" rows="3" maxlength="600"></textarea></label>
+  <label>ፎቶ<input id="fi" type="file" accept="image/*"></label>
+  <img id="prev" alt="የፎቶ ቅድመ እይታ">
+  <p class="err" id="err"></p>
+  <div class="row"><button type="button" class="btn alt" id="cancel">ተወው</button><button class="btn" type="submit">ለጥፍ</button></div>
+</form>
+</dialog>
+
+<script>
+const MC=["ቤት","መሬት","መኪና","ኤሌክትሮኒክስ","ቤት እቃ","ልብስ","አገልግሎት","ስራ","ሌላ"];
+const NC=["ዜና","ማስጠንቀቂያ","ጥያቄ","ክስተት","የጠፋ/የተገኘ"];
+const ICON={"ቤት":"🏠","መሬት":"🌍","መኪና":"🚗","ኤሌክትሮኒክስ":"📱","ቤት እቃ":"🛋️","ልብስ":"👕","አገልግሎት":"🛠️","ስራ":"💼","ሌላ":"📦"};
+const H=36e5,now=Date.now();
+const DEMO=[
+{id:1,k:"m",c:"ቤት",t:"ባለ 2 ክፍል ቤት ለኪራይ",p:12000,l:"ቦሌ",d:"ሁለተኛ ፎቅ፣ ውሃና መብራት የተሟላ።",ph:"0911000000",ts:now-2*H},
+{id:2,k:"m",c:"ኤሌክትሮኒክስ",t:"ሳምሰንግ ስልክ በጥሩ ሁኔታ",p:9500,l:"ፒያሳ",d:"ለ1 ዓመት ያገለገለ፣ ሙሉ እቃው አለ።",ph:"0922000000",ts:now-5*H},
+{id:3,k:"m",c:"መኪና",t:"ቶዮታ ቪትዝ 2008",p:850000,l:"ሰሚት",d:"ንጹህ ሊብሬ፣ ቤንዚን።",ph:"0933000000",ts:now-26*H},
+{id:4,k:"m",c:"ቤት እቃ",t:"የእንጨት ሶፋ ስብስብ",p:18000,l:"ጉርድ ሾላ",d:"5 ሰው የሚይዝ።",ph:"",ts:now-30*H},
+{id:5,k:"n",c:"ክስተት",t:"የሰፈር ጽዳት ዘመቻ ቅዳሜ",d:"ቅዳሜ ጠዋት 2 ሰዓት በመንደር ዋና በር ላይ እንገናኛለን። መጥረጊያ ያለው ይዞ ይምጣ።",l:"ቦሌ",ts:now-3*H},
+{id:6,k:"n",c:"ማስጠንቀቂያ",t:"ነገ ውሃ ይቋረጣል",d:"የውሃ አገልግሎት ለጥገና ከጠዋቱ 3 እስከ ማታ 11 ሰዓት ይቋረጣል። ቀድማችሁ ያጠራቅሙ።",l:"ፒያሳ",ts:now-8*H},
+{id:7,k:"n",c:"የጠፋ/የተገኘ",t:"የጠፋ ቁልፍ ቅርንጫፍ",d:"በቀይ ማሰሪያ የታሰረ ቁልፍ ከመናኸሪያ አካባቢ ጠፍቷል። ያገኘ ይደውልልን።",l:"ሰሚት",ts:now-20*H}
+];
+let items=[];try{items=JSON.parse(localStorage.getItem("sefer")||"null")||DEMO}catch(e){items=DEMO}
+const save=()=>{try{localStorage.setItem("sefer",JSON.stringify(items))}catch(e){}};
+let kind="m",cat="ሁሉም",img="";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ago=ts=>{const h=Math.floor((Date.now()-ts)/H);return h<1?"አሁን":h<24?`ከ${h} ሰዓት በፊት`:`ከ${Math.floor(h/24)} ቀን በፊት`};
+const birr=n=>n?Number(n).toLocaleString("en-US")+" ብር":"ዋጋ ተደራድሮ";
+
+function chips(){
+  const list=["ሁሉም",...(kind=="m"?MC:NC)];
+  $("chips").innerHTML=list.map(c=>`<button class="chip" aria-pressed="${c==cat}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+}
+function render(){
+  $("tm").setAttribute("aria-selected",kind=="m");$("tn").setAttribute("aria-selected",kind=="n");
+  chips();
+  const q=$("q").value.trim().toLowerCase();
+  const rows=items.filter(i=>i.k==kind&&(cat=="ሁሉም"||i.c==cat)&&(!q||(i.t+i.d+i.l+i.c).toLowerCase().includes(q))).sort((a,b)=>b.ts-a.ts);
+  if(!rows.length){$("list").innerHTML=`<div class="empty">እዚህ ምንም የለም።<br>መጀመሪያ ለጥፈው የሚያዩ ሁኑ፤ ከታች ያለውን + ይጫኑ።</div>`;return}
+  $("list").innerHTML=kind=="m"
+  ?`<div class="grid">`+rows.map(i=>`<article class="card"><div class="ph">${i.img?`<img src="${i.img}" alt="${esc(i.t)}">`:ICON[i.c]||"📦"}</div><div class="cb"><span class="price">${birr(i.p)}</span><span class="t">${esc(i.t)}</span><span class="m">${esc(i.l)} · ${ago(i.ts)}</span>${i.ph?`<a class="btn" href="tel:${esc(i.ph)}">ደውል</a>`:""}</div></article>`).join("")+`</div>`
+  :`<div class="news">`+rows.map(i=>`<article class="post">${i.img?`<img src="${i.img}" alt="${esc(i.t)}">`:""}<div class="pb"><span class="tag ${i.c=="ማስጠንቀቂያ"?"warn":i.c=="ክስተት"?"evt":""}">${esc(i.c)}</span><h3>${esc(i.t)}</h3><p>${esc(i.d)}</p><span class="m">${esc(i.l)} · ${ago(i.ts)}</span></div></article>`).join("")+`</div>`;
+}
+function setKind(k){kind=k;cat="ሁሉም";render()}
+function formKind(k){
+  $("kM").setAttribute("aria-pressed",k=="m");$("kN").setAttribute("aria-pressed",k=="n");
+  $("fc").innerHTML=(k=="m"?MC:NC).map(c=>`<option>${c}</option>`).join("");
+  $("priceRow").style.display=k=="m"?"grid":"none";
+  $("f").dataset.k=k;
+}
+$("tm").onclick=()=>setKind("m");$("tn").onclick=()=>setKind("n");
+$("q").oninput=render;
+$("chips").onclick=e=>{const b=e.target.closest("[data-c]");if(b){cat=b.dataset.c;render()}};
+$("add").onclick=()=>{formKind(kind);$("err").textContent="";$("dlg").showModal()};
+$("cancel").onclick=()=>$("dlg").close();
+$("kM").onclick=()=>formKind("m");$("kN").onclick=()=>formKind("n");
+
+// ፎቶ ወደ ትንሽ መጠን ይቀንሳል (ዳታ ለመቆጠብ)
+$("fi").onchange=e=>{
+  const file=e.target.files[0];img="";$("prev").style.display="none";if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{const im=new Image();im.onload=()=>{
+    const s=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement("canvas");
+    c.width=im.width*s;c.height=im.height*s;c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+    img=c.toDataURL("image/jpeg",.7);$("prev").src=img;$("prev").style.display="block"};im.src=r.result};
+  r.readAsDataURL(file);
+};
+$("f").onsubmit=e=>{
+  e.preventDefault();
+  const k=$("f").dataset.k||"m",t=$("ft").value.trim();
+  if(!t){$("err").textContent="እባክዎ ርዕስ ይጻፉ።";return}
+  items.push({id:Date.now(),k,c:$("fc").value,t,p:k=="m"?$("fp").value:"",ph:k=="m"?$("fph").value.trim():"",l:$("fl").value.trim(),d:$("fd").value.trim(),img,ts:Date.now()});
+  save();$("f").reset();img="";$("prev").style.display="none";$("dlg").close();kind=k;cat="ሁሉም";render();
+};
+render();
+</script>
+</body>
+</html>
