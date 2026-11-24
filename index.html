@@ -89,11 +89,15 @@ nav{box-shadow:0 -2px 12px rgba(0,0,0,.08)}nav button.tab[aria-selected=true] sp
 #adlg form{padding:24px 20px;gap:12px}#adlg input{padding:13px 14px;border-radius:12px}
 .brand{text-align:center;display:grid;gap:2px;margin-bottom:6px}.brand b{font-size:44px;font-weight:800;color:var(--brand)}.brand span{color:var(--mute);font-size:14px}
 #login{padding:13px;font-size:17px}#signup.btn.alt{background:var(--gold);color:#14201c;border:0;padding:13px;font-weight:800}#reset,#acancel{border:0;font-weight:400;font-size:14px;padding:6px}
+.hr{display:flex;gap:8px;align-items:center}#lang,#mb{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:10px;padding:8px 10px;font:inherit;cursor:pointer}#lang option{color:#000}
+.cmt{margin:0;padding:8px 10px;background:var(--bg);border-radius:12px;font-size:14px}.cmt b{cursor:pointer}.cmt button{float:right;background:none;border:0;color:var(--mute);cursor:pointer}
+.mf,.cf{display:flex;gap:8px}.mf input,.cf input{flex:1;min-width:0;padding:11px 14px;border-radius:99px;border:1px solid var(--line);font:inherit;background:var(--card);color:var(--ink)}
+.msgs{display:flex;flex-direction:column;gap:6px;height:45vh;overflow-y:auto;padding:6px}.msg{max-width:78%;padding:8px 12px;border-radius:16px;background:var(--line);align-self:flex-start;white-space:pre-wrap;word-break:break-word}.msg.me{align-self:flex-end;background:var(--brand);color:#fff}
 @media(prefers-reduced-motion:no-preference){dialog[open]{animation:up .2s ease-out}@keyframes up{from{transform:translateY(30px);opacity:0}}}
 </style>
 </head>
 <body>
-<header><div class="wrap"><div class="logo"><img src="icon-192.png" alt=""><div><h1>ህብረት</h1><p>ከጎረቤትህ ግዛ፣ ሽጥ፣ ዜና ስማ</p></div></div><button id="acct">ግባ</button></div></header>
+<header><div class="wrap"><div class="logo"><img src="icon-192.png" alt=""><div><h1>ህብረት</h1><p>ከጎረቤትህ ግዛ፣ ሽጥ፣ ዜና ስማ</p></div></div><div class="hr"><select id="lang" aria-label="Language"><option value="en">English</option><option value="am">አማርኛ</option></select><button id="mb" aria-label="መልዕክቶች" style="display:none">💬</button><button id="acct">ግባ</button></div></div></header>
 
 <main class="wrap">
   <section id="hero" class="hero"><h2>ወደ ህብረት እንኳን በደህና መጡ 👋</h2><p>ከጎረቤትዎ ይግዙ፣ ይሽጡ፣ የሰፈርዎን ዜና ይስሙ።</p><div class="row"><button class="btn" id="hl" style="background:#fff;color:#0f5c4d">ግባ</button><button class="btn gold" id="hs">አካውንት ክፈት</button></div></section>
@@ -149,11 +153,12 @@ nav{box-shadow:0 -2px 12px rgba(0,0,0,.08)}nav button.tab[aria-selected=true] sp
 
 <dialog id="pdlg"><div id="pbody"></div></dialog>
 <dialog id="pvdlg"><div class="pad" style="padding-top:16px"><h2>የግላዊነት ፖሊሲ</h2><p>ስምዎን፣ እድሜዎን፣ ስልክ ቁጥርዎን፣ ኢሜይልዎን እና የሚለጥፏቸውን ልጥፎች እንሰበስባለን። ስልክ ቁጥርዎ የገቡ ተጠቃሚዎች ሊያዩት ይችላሉ። መረጃዎ ለሶስተኛ ወገን አይሸጥም። መገለጫዎን ማረም ወይም ልጥፎችዎን መሰረዝ ይችላሉ፤ አካውንት ለማጥፋት ያነጋግሩን።</p><p class="hint">ይህ ረቂቅ ነው፤ ከማስተዋወቅዎ በፊት በህግ አማካሪ ያስገምግሙ።</p><button class="btn alt" onclick="this.parentNode.parentNode.close()">ዝጋ</button></div></dialog>
+<dialog id="cdlg"><div id="cbody"></div></dialog>
 <dialog id="ddlg"><div id="dbody"></div></dialog>
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {setDoc,getDoc,initializeFirestore,persistentLocalCache,collection,addDoc,updateDoc,deleteDoc,doc,query,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {where,arrayUnion,arrayRemove,setDoc,getDoc,initializeFirestore,persistentLocalCache,collection,addDoc,updateDoc,deleteDoc,doc,query,orderBy,limit,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
 const app=initializeApp({
@@ -171,18 +176,20 @@ const NC=["ዜና","ማስጠንቀቂያ","ጥያቄ","ክስተት","የጠፋ
 const ICON={"ቤት":"🏠","መሬት":"🌍","መኪና":"🚗","ኤሌክትሮኒክስ":"📱","ቤት እቃ":"🛋️","ልብስ":"👕","አገልግሎት":"🛠️","ስራ":"💼","ሌላ":"📦"};
 const H=36e5;
 const CT=["አዲስ አበባ","ድሬዳዋ","ሀዋሳ","ባህር ዳር","መቀሌ","ጎንደር","ጅማ","አዳማ","ሌላ"];
+let lang=(()=>{try{return localStorage.getItem("lang")||"en"}catch(e){return"en"}})();
 let city="",prof=null,pUnsub=null,creating=false,newAv="",editId=null;
 let items=[],loaded=false,loadErr="",user=null,kind="m",cat="ሁሉም",img="";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const ago=ts=>{const h=Math.floor((Date.now()-ts)/H);return h<1?"አሁን":h<24?`ከ${h} ሰዓት በፊት`:`ከ${Math.floor(h/24)} ቀን በፊት`};
-const birr=n=>n?Number(n).toLocaleString("en-US")+" ብር":"ዋጋ ተደራድሮ";
+const ago=ts=>{const h=Math.floor((Date.now()-ts)/H),d=Math.floor(h/24);return lang=="am"?(h<1?"አሁን":h<24?`ከ${h} ሰዓት በፊት`:`ከ${d} ቀን በፊት`):(h<1?"just now":h<24?`${h}h ago`:`${d}d ago`)};
+const birr=n=>n?Number(n).toLocaleString("en-US")+(lang=="am"?" ብር":" ETB"):(lang=="am"?"ዋጋ ተደራድሮ":"Negotiable");
 const safeImg=s=>/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(s||"")?s:"";
 const mine=i=>user&&i.uid===user.uid?`<button class="del" data-edit="${esc(i.id)}">✏ አርም</button>`+(i.k=="m"?`<button class="del" data-sold="${esc(i.id)}">${i.s?"↩ እንደገና ለሽያጭ":"✅ ተሸጧል ብለህ ምልክት አድርግ"}</button>`:"")+`<button class="del" data-del="${esc(i.id)}">🗑 ሰርዝ</button>`:"";
 
 function render(){
   $("hero").style.display=user?"none":"block";$("comp").style.display=user?"flex":"none";
-  if(user){const n=prof?prof.name.split(" ")[0]:"";$("cav").textContent=n.charAt(0)||"👤";$("cbtn").textContent=`ምን ልለጥፍ፣ ${n}?`.replace(" ,",",")}
+  if(user){const n=prof?prof.name.split(" ")[0]:"";$("cav").textContent=n.charAt(0)||"👤";$("cbtn").textContent=n?`ምን ልለጥፍ፣ ${n}?`:"ምን ልለጥፍ?"}
+  $("mb").style.display=user?"":"none";
   $("tm").setAttribute("aria-selected",kind=="m");$("tn").setAttribute("aria-selected",kind=="n");
   $("chips").innerHTML=["ሁሉም",...(kind=="m"?MC:NC)].map(c=>`<button class="chip" aria-pressed="${c==cat}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
   if(loadErr){$("list").innerHTML=`<div class="empty">${esc(loadErr)}</div>`;return}
@@ -191,13 +198,13 @@ function render(){
   const rows=items.filter(i=>i.k==kind&&(cat=="ሁሉም"||i.c==cat)&&(!city||i.ct==city)&&(!q||(i.t+i.d+i.l+i.c).toLowerCase().includes(q)));
   if(!rows.length){$("list").innerHTML=`<div class="empty">እዚህ ምንም የለም።<br>መጀመሪያ ለጥፈው የሚያዩ ሁኑ፤ ከታች ያለውን + ይጫኑ።</div>`;return}
   $("list").innerHTML=kind=="m"
-  ?`<div class="grid">`+rows.map(i=>`<article class="card${i.s?" sold":""}" data-open="${esc(i.id)}"><div class="ph">${safeImg(i.img)?`<img loading="lazy" src="${safeImg(i.img)}" alt="${esc(i.t)}">`:ICON[i.c]||"📦"}</div><div class="cb"><span class="price">${birr(i.p)}</span><span class="t">${esc(i.t)}</span><span class="m">${esc(i.l)} · ${ago(i.ts)}</span>${i.s?`<span class="tag sold">ተሸጧል</span>`:`<button class="btn">ዝርዝር</button>`}</div></article>`).join("")+`</div>`
-  :`<div class="news">`+rows.map(i=>`<article class="post" data-open="${esc(i.id)}"><div class="ph2"><div class="av sm">${esc((i.n||"?").charAt(0))}</div><div><b>${esc(i.n||"ተጠቃሚ")}</b><br><span class="m">${ago(i.ts)} · ${esc(i.l)}</span></div></div>${safeImg(i.img)?`<img loading="lazy" src="${safeImg(i.img)}" alt="${esc(i.t)}">`:""}<div class="pb"><span class="tag ${i.c=="ማስጠንቀቂያ"?"warn":i.c=="ክስተት"?"evt":""}">${esc(i.c)}</span><h3>${esc(i.t)}</h3><p>${esc(i.d)}</p><span class="m">${esc(i.l)} · ${ago(i.ts)}</span><br>${mine(i)}</div></article>`).join("")+`</div>`;
+  ?`<div class="grid">`+rows.map(i=>`<article class="card${i.s?" sold":""}" data-open="${esc(i.id)}"><div class="ph">${safeImg(i.img)?`<img loading="lazy" src="${safeImg(i.img)}" alt="${esc(i.t)}">`:ICON[i.c]||"📦"}</div><div class="cb"><span class="price">${birr(i.p)}</span><span class="t">${esc(i.t)}</span><span class="m">${esc(i.l)} · ${ago(i.ts)}${(i.lk||[]).length?" · ♥ "+i.lk.length:""}</span>${i.s?`<span class="tag sold">ተሸጧል</span>`:`<button class="btn">ዝርዝር</button>`}</div></article>`).join("")+`</div>`
+  :`<div class="news">`+rows.map(i=>`<article class="post" data-open="${esc(i.id)}"><div class="ph2"><div class="av sm">${esc((i.n||"?").charAt(0))}</div><div><b>${esc(i.n||"ተጠቃሚ")}</b><br><span class="m">${ago(i.ts)} · ${esc(i.l)}</span></div></div>${safeImg(i.img)?`<img loading="lazy" src="${safeImg(i.img)}" alt="${esc(i.t)}">`:""}<div class="pb"><span class="tag ${i.c=="ማስጠንቀቂያ"?"warn":i.c=="ክስተት"?"evt":""}">${esc(i.c)}</span><h3>${esc(i.t)}</h3><p>${esc(i.d)}</p><span class="m">${esc(i.l)} · ${ago(i.ts)}${(i.lk||[]).length?" · ♥ "+i.lk.length:""}</span><br>${mine(i)}</div></article>`).join("")+`</div>`;
 }
 
 // ሁሉም ሰው የሚያየው የጋራ ዳታ (በቀጥታ ይዘምናል)
 onSnapshot(query(collection(db,"posts"),orderBy("ts","desc"),limit(150)),
-  s=>{items=s.docs.map(d=>({id:d.id,...d.data()}));loaded=true;loadErr="";render()},
+  s=>{items=s.docs.map(d=>({id:d.id,...d.data()}));loaded=true;loadErr="";render();if(curD&&$("ddlg").open){const i=byId(curD),b=$("lkb");if(i&&b)b.textContent=likeLabel(i)}},
   e=>{loadErr="ዳታ ማንበብ አልተቻለም። Firestore ዳታቤዝ መፈጠሩንና ደንቦቹ (Rules) መቀመጣቸውን ያረጋግጡ።";console.error(e);render()});
 
 const setAcct=()=>{$("acct").textContent=user?(prof?prof.name.split(" ")[0]:"መገለጫ"):"ግባ";render()};
@@ -232,10 +239,10 @@ async function openP(uid,msg=""){
   if(!own){try{const g=await getDoc(doc(db,"users",uid));d=g.exists()?g.data():null}catch(x){}}
   const mp=items.filter(i=>i.uid==uid);
   const av=d&&safeImg(d.av)?`<img src="${safeImg(d.av)}" alt="">`:esc((d&&d.name||"?").charAt(0));
-  const list=mp.length?mp.map(i=>`<button class="plink" data-open="${esc(i.id)}"><b>${esc(i.t)}</b><span class="m">${i.k=="m"?birr(i.p):esc(i.c)} · ${ago(i.ts)}${i.s?" · ተሸጧል":""}</span></button>`).join(""):`<p class="hint">ምንም ልጥፍ የለም።</p>`;
+  const list=mp.length?mp.map(i=>`<button class="plink" data-open="${esc(i.id)}"><b>${esc(i.t)}</b><span class="m">${i.k=="m"?birr(i.p):esc(i.c)} · ${ago(i.ts)}${i.s?" · "+tr("ተሸጧል"):""}</span></button>`).join(""):`<p class="hint">ምንም ልጥፍ የለም።</p>`;
   $("pbody").innerHTML=`<div class="cover"></div><div class="pad"><div class="av" id="pav">${av}</div><h2>${esc(d?d.name:"አዲስ ተጠቃሚ")}</h2>`+(own?
    `${msg?`<p class="err">${esc(msg)}</p>`:`<p class="hint">${esc(user.email)}</p>`}<form id="pf" style="padding:0"><label>ሙሉ ስም<input id="pn" maxlength="60" value="${esc(d&&d.name)}"></label><div class="row"><label>እድሜ<input id="pa" type="number" min="13" max="120" value="${esc(d&&d.age)}"></label><label>ስልክ<input id="pph" type="tel" value="${esc(d&&d.ph)}"></label></div><label>የመገለጫ ፎቶ<input id="pfi" type="file" accept="image/*"></label><p class="err" id="perr"></p><button class="btn" type="submit">አስቀምጥ</button></form><button class="btn alt" data-out>ውጣ</button>`
-   :`${d&&d.ph&&user?`<a class="btn" href="tel:${esc(d.ph)}">📞 ${esc(d.ph)}</a>`:""}`)+
+   :`<button class="btn" data-msg="${esc(uid)}" data-name="${esc(d&&d.name)}">💬 መልዕክት ላክ</button>${d&&d.ph&&user?`<a class="btn" href="tel:${esc(d.ph)}">📞 ${esc(d.ph)}</a>`:""}`)+
    `<h3>ልጥፎች (${mp.length})</h3>${list}<button class="btn alt" data-closep>ዝጋ</button></div>`;
   if(!$("pdlg").open)$("pdlg").showModal();
 }
@@ -247,8 +254,8 @@ $("pdlg").onsubmit=async e=>{e.preventDefault();
   catch(x){$("perr").textContent="አልተሳካም፤ እንደገና ይሞክሩ።"}};
 $("pdlg").onchange=e=>{if(e.target.id=="pfi"&&e.target.files[0])shrink(e.target.files[0],160,.7,d=>{newAv=d;$("pav").innerHTML=`<img src="${d}" alt="">`})};
 $("pv").onclick=e=>{e.preventDefault();$("pvdlg").showModal()};
-$("city").innerHTML=`<option value="">ሁሉም ከተማ</option>`+CT.map(c=>`<option>${c}</option>`).join("");
-$("fct").innerHTML=CT.map(c=>`<option>${c}</option>`).join("");
+$("city").innerHTML=`<option value="">ሁሉም ከተማ</option>`+CT.map(c=>`<option value="${c}">${c}</option>`).join("");
+$("fct").innerHTML=CT.map(c=>`<option value="${c}">${c}</option>`).join("");
 $("city").onchange=e=>{city=e.target.value;render()};
 function editPost(id){const i=byId(id);if(!i)return;editId=id;$("ddlg").close();formKind(i.k);$("fh").textContent="ልጥፍ አርም";
   $("fc").value=i.c;$("fct").value=i.ct||CT[0];$("ft").value=i.t;$("fp").value=i.p||"";$("fph").value=i.ph||"";$("fl").value=i.l||"";$("fd").value=i.d||"";
@@ -256,7 +263,7 @@ function editPost(id){const i=byId(id);if(!i)return;editId=id;$("ddlg").close();
 $("dlg").onclose=()=>{editId=null;$("fh").textContent="አዲስ ለጥፍ"};
 function formKind(k){
   $("kM").setAttribute("aria-pressed",k=="m");$("kN").setAttribute("aria-pressed",k=="n");
-  $("fc").innerHTML=(k=="m"?MC:NC).map(c=>`<option>${c}</option>`).join("");
+  $("fc").innerHTML=(k=="m"?MC:NC).map(c=>`<option value="${c}">${c}</option>`).join("");
   $("priceRow").style.display=k=="m"?"grid":"none";
   $("f").dataset.k=k;
 }
@@ -273,8 +280,8 @@ $("cancel").onclick=()=>$("dlg").close();
 $("kM").onclick=()=>formKind("m");$("kN").onclick=()=>formKind("n");
 const byId=id=>items.find(i=>i.id==id);
 function openD(id){const i=byId(id);if(!i)return;const m=i.k=="m";
- $("dbody").innerHTML=`${safeImg(i.img)?`<img class="dimg" src="${safeImg(i.img)}" alt="${esc(i.t)}">`:""}<div class="dpad"><div><span class="tag">${esc(i.c)}</span>${i.s?` <span class="tag sold">ተሸጧል</span>`:""}</div>${m?`<div class="price">${birr(i.p)}</div>`:""}<h3>${esc(i.t)}</h3><span class="m">${esc(i.l)} · ${ago(i.ts)}</span><button class="plink" data-prof="${esc(i.uid)}">👤 ${esc(i.n||"ተጠቃሚ")}</button><p class="dd">${esc(i.d)||"መግለጫ የለም።"}</p>${m&&i.ph?(user?`<a class="btn" href="tel:${esc(i.ph)}">📞 ${esc(i.ph)}</a>`:`<button class="btn" data-login>ስልክ ለማየት ግባ</button>`):""}<div class="row"><button class="btn alt" data-share="${esc(id)}">↗ አጋራ</button><button class="btn alt" data-rep="${esc(id)}">⚑ ሪፖርት</button></div>${mine(i)}<button class="btn alt" data-close>ዝጋ</button></div>`;
- $("ddlg").showModal()}
+ $("dbody").innerHTML=`${safeImg(i.img)?`<img class="dimg" src="${safeImg(i.img)}" alt="${esc(i.t)}">`:""}<div class="dpad"><div><span class="tag">${esc(i.c)}</span>${i.s?` <span class="tag sold">ተሸጧል</span>`:""}</div>${m?`<div class="price">${birr(i.p)}</div>`:""}<h3>${esc(i.t)}</h3><span class="m">${esc(i.l)} · ${ago(i.ts)}</span><button class="plink" data-prof="${esc(i.uid)}">👤 ${esc(i.n||"ተጠቃሚ")}</button><p class="dd">${esc(i.d)||"መግለጫ የለም።"}</p>${m&&i.ph?(user?`<a class="btn" href="tel:${esc(i.ph)}">📞 ${esc(i.ph)}</a>`:`<button class="btn" data-login>ስልክ ለማየት ግባ</button>`):""}<div class="row"><button class="btn alt" id="lkb" data-like="${esc(id)}">${likeLabel(i)}</button><button class="btn alt" data-share="${esc(id)}">↗ አጋራ</button></div>${user&&user.uid==i.uid?"":`<button class="btn" data-msg="${esc(i.uid)}" data-name="${esc(i.n||"")}">💬 መልዕክት ላክ</button>`}<h3 style="font-size:16px">አስተያየቶች</h3><div id="cm" class="stack"></div><form id="cf" class="cf"><input id="ci" maxlength="300" placeholder="አስተያየት ጻፍ…"><button class="btn">ላክ</button></form><button class="btn alt" data-rep="${esc(id)}">⚑ ሪፖርት</button>${mine(i)}<button class="btn alt" data-close>ዝጋ</button></div>`;
+ $("ddlg").showModal();watchC(id)}
 async function share(i){const u=location.origin+location.pathname,t=i.t+(i.p?" · "+birr(i.p):"");
  try{if(navigator.share)await navigator.share({title:i.t,text:t,url:u});else{await navigator.clipboard.writeText(t+" "+u);alert("ተቀድቷል።")}}catch(x){}}
 function needLogin(msg){$("aerr").textContent=msg;$("adlg").showModal()}
@@ -283,6 +290,9 @@ async function report(id){if(!user)return needLogin("ለሪፖርት መጀመ�
  try{await addDoc(collection(db,"reports"),{pid:id,uid:user.uid,ts:Date.now()});alert("አመሰግናለሁ፤ ሪፖርቱ ደርሶናል።")}catch(x){alert("አልተሳካም።")}}
 async function clicks(e){
   const t=e.target;let b;
+  if(b=t.closest("[data-like]")){like(b.dataset.like);return}
+  if(b=t.closest("[data-delc]")){deleteDoc(doc(db,"posts",curD,"comments",b.dataset.delc)).catch(()=>alert("አልተሳካም።"));return}
+  if(b=t.closest("[data-msg]")){openChat(b.dataset.msg,b.dataset.name);return}
   if(b=t.closest("[data-del]")){if(confirm("ይህ ልጥፍ ይሰረዝ?")){try{await deleteDoc(doc(db,"posts",b.dataset.del));$("ddlg").close()}catch(x){alert("መሰረዝ አልተቻለም።")}}return}
   if(b=t.closest("[data-sold]")){const i=byId(b.dataset.sold);try{await updateDoc(doc(db,"posts",i.id),{s:!i.s});$("ddlg").close()}catch(x){alert("አልተሳካም።")}return}
   if(b=t.closest("[data-share]")){share(byId(b.dataset.share));return}
@@ -324,6 +334,53 @@ $("f").onsubmit=async e=>{
   }catch(x){console.error(x);$("err").textContent="መለጠፍ አልተቻለም። ኢንተርኔትዎን እና የFirestore ደንቦችን ያረጋግጡ።"}
   $("sub").disabled=false;
 };
+
+const likeLabel=i=>`${(i.lk||[]).includes(user&&user.uid)?"♥":"♡"} ${(i.lk||[]).length}`;
+async function like(id){if(!user)return needLogin("ለመውደድ መጀመሪያ ግቡ።");const i=byId(id),has=(i.lk||[]).includes(user.uid);
+  try{await updateDoc(doc(db,"posts",id),{lk:has?arrayRemove(user.uid):arrayUnion(user.uid)})}catch(x){alert("አልተሳካም።")}}
+let cUnsub=null,curD=null;
+function watchC(id){cUnsub&&cUnsub();curD=id;
+  cUnsub=onSnapshot(query(collection(db,"posts",id,"comments"),orderBy("ts")),s=>{const el=$("cm");if(!el)return;
+    el.innerHTML=s.docs.length?s.docs.map(d=>{const c=d.data();return `<p class="cmt"><b data-prof="${esc(c.uid)}">${esc(c.n)}</b> ${esc(c.t)} <span class="m">${ago(c.ts)}</span>${user&&c.uid==user.uid?`<button data-delc="${esc(d.id)}">✕</button>`:""}</p>`}).join(""):`<p class="hint">ገና አስተያየት የለም።</p>`},()=>{})}
+$("ddlg").onclose=()=>{cUnsub&&cUnsub();cUnsub=null;curD=null};
+$("ddlg").onsubmit=async e=>{e.preventDefault();if(!user)return needLogin("ለአስተያየት መጀመሪያ ግቡ።");if(!prof)return openP(user.uid,"ለመለጠፍ መጀመሪያ መገለጫዎን ያሟሉ።");
+  const t=$("ci").value.trim();if(!t)return;$("ci").value="";
+  try{await addDoc(collection(db,"posts",curD,"comments"),{uid:user.uid,n:prof.name,t,ts:Date.now()})}catch(x){alert("አልተሳካም።")}};
+// ቻት
+let chUnsub=null,lsUnsub=null,chat=null;
+const stopCh=()=>{chUnsub&&chUnsub();lsUnsub&&lsUnsub();chUnsub=lsUnsub=null;chat=null};
+function showChatList(){stopCh();
+  $("cbody").innerHTML=`<div class="pad" style="padding-top:16px"><h2>መልዕክቶች</h2><div id="cl" class="stack"></div><button class="btn alt" data-closec>ዝጋ</button></div>`;
+  lsUnsub=onSnapshot(query(collection(db,"chats"),where("users","array-contains",user.uid)),s=>{
+    const rows=s.docs.map(d=>({id:d.id,...d.data()})).filter(c=>c.ts).sort((a,b)=>b.ts-a.ts);
+    $("cl").innerHTML=rows.length?rows.map(c=>{const o=c.users.find(u=>u!=user.uid);return `<button class="plink" data-chat="${esc(o)}"><b>${esc((c.names||{})[o]||"User")}</b><span class="m">${esc(c.last)} · ${ago(c.ts)}</span></button>`}).join(""):`<p class="hint">ምንም መልዕክት የለም።</p>`},()=>{})}
+async function openChat(o,on){if(!user)return needLogin("ለመልዕክት መጀመሪያ ግቡ።");if(!prof)return openP(user.uid,"ለመለጠፍ መጀመሪያ መገለጫዎን ያሟሉ።");if(o==user.uid)return;
+  stopCh();on=on||"User";const id=[user.uid,o].sort().join("_");
+  try{await setDoc(doc(db,"chats",id),{users:[user.uid,o].sort(),names:{[user.uid]:prof.name,[o]:on}},{merge:true})}catch(x){alert("አልተሳካም።");return}
+  $("ddlg").close();$("pdlg").close();chat=id;
+  $("cbody").innerHTML=`<div class="pad" style="padding-top:16px"><div style="display:flex;gap:10px;align-items:center"><button class="btn alt" data-chback style="width:auto">←</button><h2>${esc(on)}</h2></div><div id="msgs" class="msgs"></div><form id="mf" class="mf"><input id="mi" maxlength="500" placeholder="መልዕክት ጻፍ…" autocomplete="off"><button class="btn">ላክ</button></form></div>`;
+  chUnsub=onSnapshot(query(collection(db,"chats",id,"messages"),orderBy("ts")),s=>{const el=$("msgs");if(!el)return;
+    el.innerHTML=s.docs.map(d=>{const m=d.data();return `<div class="msg${m.uid==user.uid?" me":""}">${esc(m.t)}</div>`}).join("");el.scrollTop=el.scrollHeight},()=>{});
+  if(!$("cdlg").open)$("cdlg").showModal()}
+$("mb").onclick=()=>{if(!user)return needLogin("ለመልዕክት መጀመሪያ ግቡ።");showChatList();$("cdlg").showModal()};
+$("cdlg").onclose=stopCh;
+$("cdlg").onclick=e=>{const t=e.target;let b;if(t===$("cdlg"))$("cdlg").close();else if(b=t.closest("[data-chat]"))openChat(b.dataset.chat,b.querySelector("b").textContent);else if(t.closest("[data-chback]"))showChatList();else if(t.closest("[data-closec]"))$("cdlg").close()};
+$("cdlg").onsubmit=async e=>{e.preventDefault();const t=$("mi").value.trim();if(!t||!chat)return;$("mi").value="";
+  try{await addDoc(collection(db,"chats",chat,"messages"),{uid:user.uid,t,ts:Date.now()});await updateDoc(doc(db,"chats",chat),{last:t.slice(0,60),ts:Date.now()})}catch(x){alert("አልተሳካም።")}};
+// ቋንቋ (ዋናው እንግሊዝኛ፤ አማርኛ አማራጭ)
+const D={"ህብረት": "Hibret", "ከጎረቤትህ ግዛ፣ ሽጥ፣ ዜና ስማ": "Buy, sell and hear the news from your neighbors", "ግባ": "Log in", "ወደ ህብረት እንኳን በደህና መጡ 👋": "Welcome to Hibret 👋", "ከጎረቤትዎ ይግዙ፣ ይሽጡ፣ የሰፈርዎን ዜና ይስሙ።": "Buy from your neighbors, sell, and hear your local news.", "አካውንት ክፈት": "Create account", "አካውንት ክፈት ✓": "Create account ✓", "ምን ልለጥፍ?": "What's on your mind?", "ፈልግ፦ ቤት፣ ስልክ፣ መኪና…": "Search: house, phone, car…", "ፈልግ": "Search", "ከተማ": "City", "ምድብ": "Category", "ሁሉም ከተማ": "All cities", "የግላዊነት ፖሊሲ": "Privacy Policy", "ገበያ": "Market", "ዜና": "News", "ለጥፍ": "Post", "አዲስ ለጥፍ": "New post", "ልጥፍ አርም": "Edit post", "🛒 መሸጥ": "🛒 Sell", "📰 ዜና": "📰 News", "ርዕስ": "Title", "ለምሳሌ፦ ባለ 2 ክፍል ቤት ለኪራይ": "e.g. 2-bedroom house for rent", "ዋጋ (ብር)": "Price (ETB)", "ስልክ": "Phone", "ቦታ (ሰፈር)": "Area (neighborhood)", "ለምሳሌ፦ ቦሌ፣ አዲስ አበባ": "e.g. Bole, Addis Ababa", "መግለጫ": "Description", "ፎቶ": "Photo", "የፎቶ ቅድመ እይታ": "Photo preview", "የሚያስገቡት ስልክ ቁጥር ለሁሉም ሰው ይታያል።": "The phone number you enter is visible to everyone.", "ተወው": "Cancel", "ሙሉ ስም": "Full name", "ስም እና የአባት ስም": "First and father's name", "እድሜ": "Age", "ኢሜይል": "Email", "ፓስዎርድ (ቢያንስ 6 ፊደል)": "Password (min. 6 characters)", "ወደ መግቢያ": "Back to log in", "ፓስዎርድ ረሳሁ": "Forgot password", "ስምዎን፣ እድሜዎን፣ ስልክ ቁጥርዎን፣ ኢሜይልዎን እና የሚለጥፏቸውን ልጥፎች እንሰበስባለን። ስልክ ቁጥርዎ የገቡ ተጠቃሚዎች ሊያዩት ይችላሉ። መረጃዎ ለሶስተኛ ወገን አይሸጥም። መገለጫዎን ማረም ወይም ልጥፎችዎን መሰረዝ ይችላሉ፤ አካውንት ለማጥፋት ያነጋግሩን።": "We collect your name, age, phone number, email and the posts you publish. Your phone number can be seen by logged-in users. Your data is not sold to third parties. You can edit your profile or delete your posts; contact us to delete your account.", "ይህ ረቂቅ ነው፤ ከማስተዋወቅዎ በፊት በህግ አማካሪ ያስገምግሙ።": "This is a draft; have a legal adviser review it before launch.", "ዝጋ": "Close", "ሁሉም": "All", "ቤት": "House", "መሬት": "Land", "መኪና": "Cars", "ኤሌክትሮኒክስ": "Electronics", "ቤት እቃ": "Furniture", "ልብስ": "Clothing", "አገልግሎት": "Services", "ስራ": "Jobs", "ሌላ": "Other", "ማስጠንቀቂያ": "Warning", "ጥያቄ": "Question", "ክስተት": "Event", "የጠፋ/የተገኘ": "Lost/Found", "አዲስ አበባ": "Addis Ababa", "ድሬዳዋ": "Dire Dawa", "ሀዋሳ": "Hawassa", "ባህር ዳር": "Bahir Dar", "መቀሌ": "Mekelle", "ጎንደር": "Gondar", "ጅማ": "Jimma", "አዳማ": "Adama", "እዚህ ምንም የለም።": "Nothing here yet.", "መጀመሪያ ለጥፈው የሚያዩ ሁኑ፤ ከታች ያለውን + ይጫኑ።": "Be the first to post — tap the + below.", "ዳታ ማንበብ አልተቻለም። Firestore ዳታቤዝ መፈጠሩንና ደንቦቹ (Rules) መቀመጣቸውን ያረጋግጡ።": "Could not load data. Check that the Firestore database exists and the Rules are published.", "ኢሜይሉ ወይም ፓስዎርዱ ትክክል አይደለም።": "Wrong email or password.", "ይህ ኢሜይል አካውንት አለው፤ «ግባ» ይጫኑ።": "This email already has an account; tap \"Log in\".", "ፓስዎርድ ቢያንስ 6 ፊደል መሆን አለበት።": "Password must be at least 6 characters.", "ኢሜይሉ ትክክል አይደለም።": "The email is not valid.", "ኢንተርኔት የለም።": "No internet connection.", "Email/Password በFirebase ውስጥ አልበራም።": "Email/Password sign-in is not enabled in Firebase.", "አልተሳካም፤ እንደገና ይሞክሩ።": "Something went wrong; please try again.", "ሙሉ ስምዎን (ስምና የአባት ስም) ያስገቡ።": "Enter your full name (first and father's name).", "እድሜ ከ13 እስከ 120 መሆን አለበት።": "Age must be between 13 and 120.", "ስልክ ቁጥሩ ትክክል አይደለም (ለምሳሌ 0911223344)።": "Invalid phone number (e.g. 0911223344).", "ኢሜይልና ቢያንስ 6 ፊደል ፓስዎርድ ያስገቡ።": "Enter an email and a password of at least 6 characters.", "አዲስ ተጠቃሚ": "New user", "የመገለጫ ፎቶ": "Profile photo", "አስቀምጥ": "Save", "ውጣ": "Log out", "ምንም ልጥፍ የለም።": "No posts yet.", "✓ ተቀምጧል": "✓ Saved", "መገለጫ": "Profile", "መገለጫዎን (ስም፣ እድሜ፣ ስልክ) ያሟሉ።": "Please complete your profile (name, age, phone).", "ለመለጠፍ መጀመሪያ መገለጫዎን ያሟሉ።": "Complete your profile before posting.", "ለመለጠፍ መጀመሪያ ግቡ።": "Log in to post.", "ተሸጧል": "Sold", "ተጠቃሚ": "User", "መግለጫ የለም።": "No description.", "ስልክ ለማየት ግባ": "Log in to see phone", "ስልክ ለማየት መጀመሪያ ግቡ።": "Log in to see the phone number.", "↗ አጋራ": "↗ Share", "⚑ ሪፖርት": "⚑ Report", "✏ አርም": "✏ Edit", "↩ እንደገና ለሽያጭ": "↩ Relist", "✅ ተሸጧል ብለህ ምልክት አድርግ": "✅ Mark as sold", "🗑 ሰርዝ": "🗑 Delete", "ዝርዝር": "Details", "ተቀድቷል።": "Copied.", "ለሪፖርት መጀመሪያ ግቡ።": "Log in to report.", "ይህ ልጥፍ ተገቢ አይደለም ብለው ሪፖርት ያድርጉ?": "Report this post as inappropriate?", "አመሰግናለሁ፤ ሪፖርቱ ደርሶናል።": "Thank you; your report was received.", "አልተሳካም።": "Failed.", "ይህ ልጥፍ ይሰረዝ?": "Delete this post?", "መሰረዝ አልተቻለም።": "Could not delete.", "ከአካውንትህ ልውጣ?": "Log out of your account?", "መጀመሪያ ኢሜይልዎን ያስገቡ።": "Enter your email first.", "የማስተካከያ ሊንክ ወደ ኢሜይልዎ ተልኳል።": "A reset link was sent to your email.", "እባክዎ ርዕስ ይጻፉ።": "Please enter a title.", "ፎቶው በጣም ትልቅ ነው፤ ሌላ ይምረጡ።": "The photo is too large; choose another.", "መለጠፍ አልተቻለም። ኢንተርኔትዎን እና የFirestore ደንቦችን ያረጋግጡ።": "Could not post. Check your internet and the Firestore rules.", "መልዕክቶች": "Messages", "💬 መልዕክት ላክ": "💬 Send message", "ላክ": "Send", "መልዕክት ጻፍ…": "Write a message…", "አስተያየት ጻፍ…": "Write a comment…", "አስተያየቶች": "Comments", "ገና አስተያየት የለም።": "No comments yet.", "ምንም መልዕክት የለም።": "No messages yet.", "ለመውደድ መጀመሪያ ግቡ።": "Log in to like.", "ለአስተያየት መጀመሪያ ግቡ።": "Log in to comment.", "ለመልዕክት መጀመሪያ ግቡ።": "Log in to send messages."};
+const RX=[[/^ምን ልለጥፍ፣ (.*)\?$/,"What's on your mind, $1?"],[/^ልጥፎች \((\d+)\)$/,"Posts ($1)"]];
+const AMH=/[\u1200-\u137F]/,AT=["placeholder","aria-label","alt","title"];
+function tr(s){if(lang=="am"||!AMH.test(s))return s;const m=s.match(/^(\s*)([\s\S]*?)(\s*)$/),c=m[2];if(D[c])return m[1]+D[c]+m[3];for(const [r,o] of RX)if(r.test(c))return m[1]+c.replace(r,o)+m[3];return s}
+function trNode(n){const pt=n.parentNode;if(pt&&/^(SCRIPT|STYLE|TEXTAREA)$/.test(pt.tagName))return;const v=n.nodeValue,src=n.__t!==undefined&&v===n.__t?n.__o:v,out=lang=="am"?src:tr(src);
+  if(out!==src||n.__t!==undefined){n.__o=src;n.__t=out;if(v!==out)n.nodeValue=out}}
+function trEl(e){if(!e.getAttribute)return;for(const a of AT){const v=e.getAttribute(a);if(v==null)continue;e.__a=e.__a||{};const p=e.__a[a],src=p&&v===p.t?p.o:v,out=lang=="am"?src:tr(src);if(out!==src||p){e.__a[a]={o:src,t:out};if(v!==out)e.setAttribute(a,out)}}}
+function trAll(r){if(r.nodeType==3){trNode(r);return}if(r.nodeType!=1)return;trEl(r);const w=document.createTreeWalker(r,5);let n;while(n=w.nextNode())n.nodeType==3?trNode(n):trEl(n)}
+const _al=window.alert.bind(window),_cf=window.confirm.bind(window);window.alert=m=>_al(tr(m));window.confirm=m=>_cf(tr(m));
+new MutationObserver(ms=>{for(const m of ms){if(m.type=="childList")m.addedNodes.forEach(trAll);else if(m.type=="characterData")trNode(m.target);else trEl(m.target)}}).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:AT});
+function setLang(l){lang=l;try{localStorage.setItem("lang",l)}catch(e){}document.documentElement.lang=l;document.title=l=="am"?"ህብረት · ገበያና ዜና":"Hibret · Market & News";$("lang").value=l;trAll(document.body);render()}
+$("lang").onchange=e=>setLang(e.target.value);
+setLang(lang);
 render();
 if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
