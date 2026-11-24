@@ -1,6 +1,6 @@
 // Service worker: የአፑን ፋይሎች በስልክ ያስቀምጣል፤ ኢንተርኔት ባይኖርም ገጹ ይከፈታል።
 // ዳታ (Firebase) አይቀመጥም፤ ሁልጊዜ ከኢንተርኔት ይመጣል።
-const CACHE = "sefer-v2";
+const CACHE = "hibret-v4";
 const FILES = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png", "icon-maskable-512.png"];
 
 self.addEventListener("install", e => {
