@@ -1,13 +1,13 @@
 {
-  "name": "ህብረት · ገበያና ስራ",
-  "short_name": "ህብረት",
-  "description": "ከጎረቤትህ ግዛ፣ ሽጥ፣ ስራ ፈልግ",
+  "name": "ሰፈር · ገበያና ዜና",
+  "short_name": "ሰፈር",
+  "description": "ከጎረቤትህ ግዛ፣ ሽጥ፣ ዜና ስማ",
   "lang": "am",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f3c96",
-  "theme_color": "#0f3c96",
+  "background_color": "#0f5c4d",
+  "theme_color": "#0f5c4d",
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
     {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
